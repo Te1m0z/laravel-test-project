@@ -1,0 +1,15 @@
+name: Deploy
+
+on: workflow_dispatch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: set -eu
+      - run: mkdir "$HOME/.ssh"
+      - run: echo "${{ secrets.key }}" > "$HOME/.ssh/id_rsa"
+      - run: chmod 600 "$HOME/.ssh/id_rsa"
+      - run: rsync -e "ssh -i $HOME/.ssh/id_rsa -o StrictHostKeyChecking=no" --archive --compress --delete --exclude-from="exclude.txt" . ${{ secrets.user }}@${{ secrets.host }}:${{ secrets.path }}
+      - run: ssh -i $HOME/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.user }}@${{ secrets.host }} 'sudo chmod -R o+w ${{ secrets.path }}/storage && sudo chmod -R 777 ${{ secrets.path }}/bootstrap/cache'
